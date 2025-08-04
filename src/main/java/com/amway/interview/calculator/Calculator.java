@@ -20,7 +20,7 @@ public class Calculator {
     public double divide(double a,double b){
         return a / b;
     }
-    public String equals(double result){
+    public String displayResult(double result){
         return lifoStack.push(getFormatedAmount(result));
     }
     public void clear(){
