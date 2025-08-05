@@ -6,18 +6,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class CalculatorTest {
 
     @Test
+    @DisplayName("test undo")
     void testUndo() {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double num1 = 6.5d;
         double num2 = 3.5d;
         String expectedResult1 = "10";
@@ -35,8 +36,9 @@ class CalculatorTest {
     }
 
     @Test
+    @DisplayName("test redo")
     void testRedo() {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double num1 = 6.5d;
         double num2 = 3.5d;
         String expectedResult1 = "10";
@@ -58,7 +60,7 @@ class CalculatorTest {
     @Test
     @DisplayName("241271.982201d + 59021.013952d = 300292.996153")
     void testAdds() {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double result = calculator.add(241271.982201d, 59021.013952d);
         assertEquals("300292.996153", calculator.displayResult(result));
     }
@@ -66,7 +68,7 @@ class CalculatorTest {
     @ParameterizedTest
     @MethodSource("testSubstractData")
     void testSubstract(double num1, double num2, String expecedResult) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double result = calculator.substract(num1, num2);
         assertEquals(expecedResult, calculator.displayResult(result), num1 + "-" + num2 + "should equal " + expecedResult);
     }
@@ -74,7 +76,7 @@ class CalculatorTest {
     @ParameterizedTest
     @MethodSource("testMultiplyData")
     void testMultiply(double num1, double num2, String expecedResult) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double result = calculator.multiply(num1, num2);
         assertEquals(expecedResult, calculator.displayResult(result), num1 + "*" + num2 + "should equal " + expecedResult);
     }
@@ -82,7 +84,7 @@ class CalculatorTest {
     @ParameterizedTest
     @MethodSource("testDivideData")
     void testDivide(double num1, double num2, String expecedResult) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double result = calculator.divide(num1, num2);
         assertEquals(expecedResult, calculator.displayResult(result), num1 + "/" + num2 + "should equal " + expecedResult);
     }
@@ -113,21 +115,55 @@ class CalculatorTest {
             "1,  100, 101"
     })
     void testAddWithParameterizedTest(double first, double second, String expectedResult) {
-        Calculator calculator = new Calculator();
+        Calculator calculator = new Calculator(new Validator());
         double result = calculator.add(first, second);
-        assertEquals(expectedResult, calculator.equals(result),
+        assertEquals(expectedResult, calculator.displayResult(result),
                 () -> first + " + " + second + " should equal " + expectedResult);
     }
     @Test
-    void testDoubleLimit(){
-        double num1 = 50.0d;
-        double num2 = 0d;
-        Calculator calculator = new Calculator();
-        double calculatorNum = calculator.divide(num2, num1);
-        System.out.println("calculatorNum = " + calculatorNum);
-//        String result = calculator.displayResult(calculatorNum);
-//        assertThrows(RuntimeException.class, () -> {
-//            calculator.displayResult(calculatorNum);
-//        });
+    @DisplayName("test error case: max value")
+    void testErrorCaseMaxValue(){
+        Calculator calculator = new Calculator(new Validator());
+        double num1 = Double.MAX_VALUE;
+        double num2 = 32291290.3;
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            calculator.multiply(num1, num2);
+        } );
+        assertEquals("The input value is over limit.",exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("test error case: min value")
+    void testErrorCaseMinValue(){
+        double num1 = 32291290.3;
+        double num2 = Double.MIN_VALUE;
+
+        Calculator calculator = new Calculator(new Validator());
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            calculator.substract(num1, num2);
+        } );
+        assertEquals("The input value is over limit.",exception.getMessage());
+    }
+    @Test
+    @DisplayName("test clear")
+    void testClear(){
+        Calculator calculator = new Calculator(new Validator());
+        double num1 = 6.5d;
+        double num2 = 3.5d;
+        String expectedResult1 = "10";
+        double calculate1 = calculator.add(num1,num2);
+        String cal1Result1 = calculator.displayResult(calculate1);
+        assertEquals(expectedResult1, cal1Result1, num1 + " + " + num2 + " should equal " + expectedResult1);
+        double num3 = 2.0d;
+        double num4 = 16.0d;
+        String expectedResult2 = "32";
+        double calculate2 = calculator.multiply(num3, num4);
+        String calResult2  = calculator.displayResult(calculate2);
+        assertEquals(expectedResult2, calResult2, num3 + " * " + num4 + " should equal " + expectedResult2);
+        calculator.clear();
+        Exception exception = assertThrows(RuntimeException.class, () ->{
+            calculator.undo();
+        });
+        assertEquals("No operation can be undo.", exception.getMessage());
     }
 }
